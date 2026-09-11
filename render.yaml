@@ -1,0 +1,53 @@
+# Render Blueprint — AYUVAANI API
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: ayuvaani-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # Set these in the Render dashboard (or `render env set`) — do not commit secrets
+      - key: DATABASE_URL
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OCR_PROVIDER
+        value: aws
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: us-east-1
+      - key: ABDM_GATEWAY_URL
+        value: https://dev.abdm.gov.in/gateway
+      - key: ABDM_CLIENT_ID
+        sync: false
+      - key: ABDM_CLIENT_SECRET
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CARTESIA_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: TURN_URLS
+        sync: false
+      - key: TURN_USERNAME
+        sync: false
+      - key: TURN_CREDENTIAL
+        sync: false
