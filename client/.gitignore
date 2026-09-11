@@ -29,3 +29,8 @@ backend/scratch/
 
 # One-off development scripts
 backend/scripts/
+.vercel
+.env*
+!.env.example
+!.env.production
+
