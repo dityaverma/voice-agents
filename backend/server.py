@@ -226,12 +226,19 @@ small_webrtc_handler = SmallWebRTCRequestHandler(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    pool = open_pool()
-    migrate(pool)
+    try:
+        pool = open_pool()
+        migrate(pool)
+        logger.info("Database pool ready")
+    except Exception as exc:
+        logger.exception("Database init failed (API will start; DB routes may 503): {}", exc)
     try:
         yield
     finally:
-        close_pool()
+        try:
+            close_pool()
+        except Exception:
+            pass
         await small_webrtc_handler.close()
 
 
