@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "start": "serve -s dist -l tcp://0.0.0.0:$PORT"
+    "start": "npx --yes serve -s dist -l tcp://0.0.0.0:$PORT"
   },
   "dependencies": {
     "@pipecat-ai/client-js": "^1.13.0",

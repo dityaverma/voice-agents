@@ -4,5 +4,5 @@ builder = "RAILPACK"
 buildCommand = "npm ci && npm run build"
 
 [deploy]
-startCommand = "npm start"
+startCommand = "npx --yes serve -s dist -l tcp://0.0.0.0:$PORT"
 restartPolicyType = "ON_FAILURE"
