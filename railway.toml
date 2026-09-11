@@ -1,0 +1,10 @@
+# API service (voice + OCR + DB). In Railway: root directory = /
+[build]
+builder = "RAILPACK"
+buildCommand = "uv sync --project bot --frozen"
+
+[deploy]
+startCommand = "uv run --project bot uvicorn backend.server:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"

@@ -111,13 +111,77 @@ def _remove_temp_file(path: str) -> None:
 
 
 
+def _is_production() -> bool:
+    return bool(os.getenv("RAILWAY_ENVIRONMENT")) or os.getenv("ENV", "").lower() in {
+        "production",
+        "prod",
+    }
+
+
+def _cors_origins() -> list[str]:
+    defaults = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ]
+    extra = [
+        origin.strip()
+        for origin in (os.getenv("CORS_ORIGINS") or "").split(",")
+        if origin.strip()
+    ]
+    # Preserve order, drop duplicates.
+    seen: set[str] = set()
+    origins: list[str] = []
+    for origin in defaults + extra:
+        if origin not in seen:
+            seen.add(origin)
+            origins.append(origin)
+    return origins
+
+
+def _ice_servers() -> list[IceServer]:
+    servers: list[IceServer] = [
+        IceServer(urls="stun:stun.l.google.com:19302"),
+    ]
+    turn_urls = [
+        url.strip()
+        for url in (os.getenv("TURN_URLS") or "").split(",")
+        if url.strip()
+    ]
+    username = (os.getenv("TURN_USERNAME") or "").strip()
+    credential = (os.getenv("TURN_CREDENTIAL") or "").strip()
+    if turn_urls:
+        if username and credential:
+            servers.append(
+                IceServer(urls=turn_urls, username=username, credential=credential)
+            )
+        else:
+            for url in turn_urls:
+                servers.append(IceServer(urls=url))
+        logger.info("WebRTC ICE: STUN + {} TURN URL(s)", len(turn_urls))
+    else:
+        logger.warning(
+            "TURN_URLS not set — remote WebRTC audio may fail behind NAT/Railway"
+        )
+    return servers
+
+
 def _patch_ice_host_discovery_if_needed() -> None:
     """
     Prefer real loopback for same-machine browser ↔ bot.
 
     Cloudflare WARP and similar create fake 127.0.2.x hosts that break mic audio
     (TTS may still work one-way). Also fall back if ifaddr is permission-blocked.
+
+    Skip on Railway/production so host candidates are not forced to 127.0.0.1.
     """
+    if _is_production():
+        logger.info("Skipping loopback ICE preference (production/Railway)")
+        return
+
     import aioice.ice as ice
 
     original = ice.get_host_addresses
@@ -155,7 +219,7 @@ def _patch_ice_host_discovery_if_needed() -> None:
 _patch_ice_host_discovery_if_needed()
 
 small_webrtc_handler = SmallWebRTCRequestHandler(
-    ice_servers=[IceServer(urls="stun:stun.l.google.com:19302")],
+    ice_servers=_ice_servers(),
     connection_mode=ConnectionMode.MULTIPLE,
 )
 
@@ -174,12 +238,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="AYUVAANI Platform", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-    ],
+    allow_origins=_cors_origins(),
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -966,9 +1025,10 @@ async def run_evals():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="MediKiosk Module A bot server")
-    parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", type=int, default=7860)
+    default_port = int(os.getenv("PORT", "7860"))
+    parser = argparse.ArgumentParser(description="AYUVAANI platform server")
+    parser.add_argument("--host", default=os.getenv("HOST", "0.0.0.0"))
+    parser.add_argument("--port", type=int, default=default_port)
     parser.add_argument("-v", "--verbose", action="count", default=0)
     args = parser.parse_args()
 

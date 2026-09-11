@@ -6,6 +6,8 @@ Built with **Pipecat** (SmallWebRTC) + a React kiosk UI. This repo implements **
 
 **Full walkthrough** (architecture, stack, file-by-file, dual-mode flow): [`docs/MODULE_A.md`](docs/MODULE_A.md)
 
+**Deploy on Railway** (API + kiosk + Supabase): [`docs/RAILWAY.md`](docs/RAILWAY.md)
+
 ## What Module A does
 
 - Adaptive clinical interview (chief complaint → HPI with SOCRATES for pain → past / drug-allergy / family / personal / ROS)
